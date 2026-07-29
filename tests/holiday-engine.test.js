@@ -1,0 +1,18 @@
+const assert = require('assert');
+const fs = require('fs');
+const vm = require('vm');
+const context = { window: {} };
+vm.createContext(context);
+vm.runInContext(fs.readFileSync('holiday-engine.js', 'utf8'), context);
+const H = context.window.HolidayEngine;
+
+assert.strictEqual(H.eventFor(new Date(2026, 0, 1)).name, '신정');
+assert.strictEqual(H.eventFor(new Date(2026, 2, 2)).name, '삼일절 대체공휴일');
+assert.strictEqual(H.eventFor(new Date(2026, 4, 1)).type, 'holiday');
+assert.strictEqual(H.eventFor(new Date(2026, 5, 3)).name, '제9회 전국동시지방선거');
+assert.strictEqual(H.eventFor(new Date(2026, 4, 8)).type, 'anniversary');
+assert.strictEqual(H.eventFor(new Date(2026, 6, 29)), null);
+const may = H.eventsInMonth(new Date(2026, 4, 1));
+assert.ok(may.some(item => item.name === '어린이날'));
+assert.ok(may.some(item => item.name === '어버이날'));
+console.log('holiday calendar contract: PASS');

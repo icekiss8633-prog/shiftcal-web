@@ -37,14 +37,16 @@
       date.setDate(start.getDate() + i);
       const key = ShiftEngine.key(date);
       const shift = ShiftEngine.shiftFor(date, data.settings, data.overrides);
+      const holiday = HolidayEngine.eventFor(date);
       const cell = document.createElement('button');
       cell.className = 'day-cell';
       if (date.getMonth() !== viewDate.getMonth()) cell.classList.add('muted');
       if (date.getDay() === 0) cell.classList.add('sunday');
       if (date.getDay() === 6) cell.classList.add('saturday');
       if (key === todayKey()) cell.classList.add('today');
-      cell.setAttribute('aria-label', `${key} ${shift.name}${data.notes[key] ? ' 메모 있음' : ''}`);
-      cell.innerHTML = `<span class="day-number">${date.getDate()}</span><span class="shift-pill ${shift.isOff ? 'off' : ''}" style="background:${shift.color}">${shift.name}</span>${data.overrides[key] !== undefined ? '<i class="override-dot"></i>' : ''}${data.notes[key] ? '<i class="note-dot" title="메모 있음"></i>' : ''}`;
+      if (holiday) cell.classList.add(holiday.type === 'holiday' ? 'holiday-cell' : 'anniversary-cell');
+      cell.setAttribute('aria-label', `${key} ${shift.name}${holiday ? ` ${holiday.name}` : ''}${data.notes[key] ? ' 메모 있음' : ''}`);
+      cell.innerHTML = `<span class="day-number">${date.getDate()}</span>${holiday ? `<span class="holiday-label ${holiday.type}">${holiday.name}</span>` : ''}<span class="shift-pill ${shift.isOff ? 'off' : ''}" style="background:${shift.color}">${shift.name}</span>${data.overrides[key] !== undefined ? '<i class="override-dot"></i>' : ''}${data.notes[key] ? '<i class="note-dot" title="메모 있음"></i>' : ''}`;
       cell.addEventListener('click', () => openOverride(date));
       $('calendarGrid').append(cell);
     }
