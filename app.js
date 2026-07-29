@@ -4,6 +4,22 @@
   let viewDate = new Date();
   let overrideDate = null;
   let currentView = 'calendarView';
+  const presets = {
+    duty: { name: '당직', color: '#D35400', startHour: 9, startMinute: 0, endHour: 9, endMinute: 0, isOff: false },
+    off: { name: '비번', color: '#95A5A6', startHour: 0, startMinute: 0, endHour: 0, endMinute: 0, isOff: true },
+    annual: { name: '연가', color: '#16A085', startHour: 0, startMinute: 0, endHour: 0, endMinute: 0, isOff: true },
+    official: { name: '공가', color: '#5E81AC', startHour: 0, startMinute: 0, endHour: 0, endMinute: 0, isOff: true },
+  };
+  const timeParts = value => { const [hour, minute] = String(value || '09:00').split(':').map(Number); return { hour: hour || 0, minute: minute || 0 }; };
+  const timeValue = (hour, minute) => `${String(hour || 0).padStart(2, '0')}:${String(minute || 0).padStart(2, '0')}`;
+  function toggleCustomFields() {
+    $('customShiftFields').classList.toggle('hidden-view', $('overrideSelect').value !== 'custom');
+  }
+  function customObjectFromForm() {
+    const start = timeParts($('customStart').value);
+    const end = timeParts($('customEnd').value);
+    return { name: $('customShiftName').value.trim() || '기타', color: '#607D8B', startHour: start.hour, startMinute: start.minute, endHour: end.hour, endMinute: end.minute, isOff: $('customIsOff').checked, custom: true };
+  }
   const todayKey = () => ShiftEngine.key(new Date());
   const fmt = date => `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
 
@@ -140,16 +156,36 @@
     $('overrideTitle').textContent = `${date.getMonth() + 1}월 ${date.getDate()}일 근무 변경`;
     const select = $('overrideSelect');
     select.innerHTML = '';
-    pattern.types.forEach((tuple, index) => {
-      const option = document.createElement('option');
-      option.value = index;
-      option.textContent = `${index + 1}일차 · ${tuple[0]}`;
-      select.append(option);
-    });
-    const anchor = new Date(`${data.settings.anchorDate}T00:00:00`);
-    const defaultIndex = (data.settings.anchorIndex + Math.round((date - anchor) / 86400000)) % pattern.types.length;
-    select.value = String(data.overrides[key] ?? (defaultIndex + pattern.types.length) % pattern.types.length);
+    select.append(new Option('기본 패턴', 'default'));
+    Object.entries({ duty: '당직', off: '비번', annual: '연가', official: '공가' }).forEach(([value, label]) => select.append(new Option(label, value)));
+    select.append(new Option('직접 만들기', 'custom'));
+    const current = data.overrides[key];
+    if (typeof current === 'number') {
+      const legacy = ShiftEngine.shiftFor(date, data.settings, data.overrides);
+      select.value = 'custom';
+      $('customShiftName').value = legacy.name || '';
+      $('customStart').value = timeValue(legacy.startHour, legacy.startMinute);
+      $('customEnd').value = timeValue(legacy.endHour, legacy.endMinute);
+      $('customIsOff').checked = Boolean(legacy.isOff);
+    } else if (current?.custom) {
+      select.value = 'custom';
+      $('customShiftName').value = current.name || '';
+      $('customStart').value = timeValue(current.startHour, current.startMinute);
+      $('customEnd').value = timeValue(current.endHour, current.endMinute);
+      $('customIsOff').checked = Boolean(current.isOff);
+    } else if (current) {
+      const presetValue = Object.entries(presets).find(([, preset]) => preset.name === current.name)?.[0];
+      select.value = presetValue || 'custom';
+      if (!presetValue) $('customShiftName').value = current.name || '';
+    } else select.value = 'default';
+    if (!current) {
+      $('customShiftName').value = '';
+      $('customStart').value = '09:00';
+      $('customEnd').value = '18:00';
+      $('customIsOff').checked = false;
+    }
     $('noteInput').value = data.notes[key] || '';
+    toggleCustomFields();
     $('overrideDialog').showModal();
   }
 
@@ -159,6 +195,7 @@
   $('settingsButton').onclick = openSettings;
   $('bottomSettings').onclick = openSettings;
   $('patternSelect').onchange = populateAnchorOptions;
+  $('overrideSelect').onchange = toggleCustomFields;
   document.querySelectorAll('.bottom-nav-item[data-view]').forEach(button => button.addEventListener('click', () => showView(button.dataset.view)));
 
   $('settingsForm').addEventListener('submit', event => {
@@ -172,7 +209,11 @@
   $('overrideForm').addEventListener('submit', event => {
     if (event.submitter?.id !== 'saveOverride' || !overrideDate) return;
     const key = ShiftEngine.key(overrideDate);
-    data.overrides[key] = Number($('overrideSelect').value);
+    const selected = $('overrideSelect').value;
+    if (selected === 'default') delete data.overrides[key];
+    else if (selected.startsWith('pattern:')) data.overrides[key] = Number(selected.split(':')[1]);
+    else if (presets[selected]) data.overrides[key] = { ...presets[selected], custom: true };
+    else data.overrides[key] = customObjectFromForm();
     const note = $('noteInput').value.trim();
     if (note) data.notes[key] = note;
     else delete data.notes[key];

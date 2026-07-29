@@ -1,4 +1,4 @@
-const CACHE = 'shiftcal-web-v4';
+const CACHE = 'shiftcal-web-v5';
 const ASSETS = ['./','./index.html','./styles.css','./shift-engine.js','./stats-engine.js','./holiday-engine.js','./storage.js','./app.js','./manifest.json'];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS))));
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))));

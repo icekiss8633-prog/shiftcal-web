@@ -1,0 +1,15 @@
+const assert = require('assert');
+const fs = require('fs');
+const vm = require('vm');
+const context = { window: {} };
+vm.createContext(context);
+vm.runInContext(fs.readFileSync('shift-engine.js', 'utf8'), context);
+const E = context.window.ShiftEngine;
+const settings = { pattern: 'threeShift', anchorDate: '2026-07-29', anchorIndex: 0 };
+const custom = { name: '교육', color: '#607D8B', startHour: 9, startMinute: 0, endHour: 18, endMinute: 0, isOff: false, custom: true };
+const result = E.shiftFor(new Date(2026, 7, 1), settings, { '2026-08-01': custom });
+assert.strictEqual(result.name, '교육');
+assert.strictEqual(result.startHour, 9);
+assert.strictEqual(result.isOff, false);
+assert.strictEqual(E.shiftFor(new Date(2026, 7, 2), settings, { '2026-08-01': custom }).name, '야간');
+console.log('custom shift contract: PASS');

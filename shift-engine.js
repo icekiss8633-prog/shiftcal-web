@@ -18,7 +18,11 @@
   function shiftFor(date, settings, overrides = {}) {
     const pattern = PATTERNS[settings.pattern] || PATTERNS.threeShift;
     const dateKey = key(date);
-    if (overrides[dateKey] !== undefined) return typeFromTuple(pattern.types[overrides[dateKey]], overrides[dateKey]);
+    if (overrides[dateKey] !== undefined) {
+      const override = overrides[dateKey];
+      if (typeof override === 'object' && override !== null) return { id: `custom-${dateKey}`, ...override };
+      return typeFromTuple(pattern.types[override], override);
+    }
     const anchor = fromKey(settings.anchorDate || key(new Date()));
     let index = (Number(settings.anchorIndex) + dayDiff(anchor, date)) % pattern.types.length;
     if (index < 0) index += pattern.types.length;
