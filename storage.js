@@ -1,7 +1,7 @@
 (() => {
   const STORAGE_KEY = 'shiftcal-web-v1';
-  const defaults = () => ({ settings: { pattern:'threeShift', anchorDate: new Date().toISOString().slice(0,10), anchorIndex:0 }, overrides:{} });
-  function load() { try { return { ...defaults(), ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') }; } catch { return defaults(); } }
+  const defaults = () => ({ settings: { pattern:'threeShift', anchorDate: new Date().toISOString().slice(0,10), anchorIndex:0 }, overrides:{}, notes:{} });
+  function load() { try { const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); return { ...defaults(), ...parsed, notes:{ ...defaults().notes, ...(parsed.notes || {}) } }; } catch { return defaults(); } }
   function save(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
   function exportData(data) {
     const blob = new Blob([JSON.stringify({ ...data, exportedAt:new Date().toISOString(), app:'ShiftCal Web', version:1 }, null, 2)], {type:'application/json'});

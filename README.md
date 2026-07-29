@@ -8,6 +8,9 @@
 - 월간 달력
 - 오늘 근무 카드
 - 날짜별 근무 예외 지정
+- 날짜별 메모(최대 500자)
+- 아이폰 모바일용 bottom sheet 입력창
+- 메모·근무 변경 표시 점
 - localStorage 저장
 - JSON 백업 내보내기·가져오기
 - PWA manifest/service worker
