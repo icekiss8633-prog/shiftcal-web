@@ -1,0 +1,20 @@
+# ShiftCal Web
+
+광고·로그인·외부 서버 없이 개인용으로 사용하는 교대근무 PWA 초안.
+
+## 현재 구현
+- ShiftCal Swift 원본의 주요 패턴 9개
+- 기준일·기준 근무 설정
+- 월간 달력
+- 오늘 근무 카드
+- 날짜별 근무 예외 지정
+- localStorage 저장
+- JSON 백업 내보내기·가져오기
+- PWA manifest/service worker
+
+## 실행
+```sh
+python3 -m http.server 4173
+```
+브라우저에서 `http://localhost:4173` 접속.
+아이폰에서는 HTTPS로 배포한 뒤 Safari의 공유 메뉴에서 “홈 화면에 추가”를 사용한다.

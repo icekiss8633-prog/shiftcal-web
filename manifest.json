@@ -1,0 +1,11 @@
+{
+  "name": "ShiftCal Web",
+  "short_name": "ShiftCal",
+  "description": "광고 없는 개인용 교대근무 달력",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
+  "lang": "ko",
+  "icons": []
+}
