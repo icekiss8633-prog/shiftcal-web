@@ -1,0 +1,40 @@
+name: ShiftCal Web CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Syntax checks
+        run: |
+          node --check app.js
+          node --check storage.js
+          node --check shift-engine.js
+          node --check stats-engine.js
+          node --check holiday-engine.js
+          node --check service-worker.js
+      - name: Contract tests
+        run: |
+          node tests/storage.test.js
+          node tests/custom-shift.test.js
+          node tests/custom-shift-catalog.test.js
+          node tests/stats-engine.test.js
+          node tests/holiday-engine.test.js

@@ -28,3 +28,8 @@ python3 -m http.server 4173
 ```
 브라우저에서 `http://localhost:4173` 접속.
 아이폰에서는 HTTPS로 배포한 뒤 Safari의 공유 메뉴에서 “홈 화면에 추가”를 사용한다.
+
+## 개발 품질 자동화
+- `AGENTS.md`에 ShiftCalWeb 작업 규칙·필수 검증 절차를 기록한다.
+- `main` push와 pull request마다 GitHub Actions가 문법 검사와 전체 계약 테스트를 실행한다.
+- Pages 배포는 `.github/workflows/pages.yml`이 담당한다.
