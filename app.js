@@ -12,14 +12,37 @@
   };
   const timeParts = value => { const [hour, minute] = String(value || '09:00').split(':').map(Number); return { hour: hour || 0, minute: minute || 0 }; };
   const timeValue = (hour, minute) => `${String(hour || 0).padStart(2, '0')}:${String(minute || 0).padStart(2, '0')}`;
+  function isCustomChoice(value) { return value === 'custom' || value.startsWith('saved:'); }
+  function handleOverrideChoice() {
+    const value = $('overrideSelect').value;
+    if (value.startsWith('saved:')) populateCustomFields(savedShiftById(value.slice(6)) || {});
+    toggleCustomFields();
+  }
   function toggleCustomFields() {
-    $('customShiftFields').classList.toggle('hidden-view', $('overrideSelect').value !== 'custom');
+    $('customShiftFields').classList.toggle('hidden-view', !isCustomChoice($('overrideSelect').value));
+  }
+  function populateCustomFields(shift = {}) {
+    $('customShiftName').value = shift.name || '';
+    $('customStart').value = timeValue(shift.startHour ?? 9, shift.startMinute ?? 0);
+    $('customEnd').value = timeValue(shift.endHour ?? 18, shift.endMinute ?? 0);
+    $('customColor').value = shift.color || '#607D8B';
+    $('customIsOff').checked = Boolean(shift.isOff);
   }
   function customObjectFromForm() {
     const start = timeParts($('customStart').value);
     const end = timeParts($('customEnd').value);
-    return { name: $('customShiftName').value.trim() || '기타', color: '#607D8B', startHour: start.hour, startMinute: start.minute, endHour: end.hour, endMinute: end.minute, isOff: $('customIsOff').checked, custom: true };
+    return { name: $('customShiftName').value.trim() || '기타', color: $('customColor').value || '#607D8B', startHour: start.hour, startMinute: start.minute, endHour: end.hour, endMinute: end.minute, isOff: $('customIsOff').checked, custom: true };
   }
+  function upsertCustomShift(shift, id = null) {
+    const normalizedId = id || `custom-${Date.now()}`;
+    const saved = { ...shift, id: normalizedId, custom: true };
+    const index = data.customShifts.findIndex(item => item.id === normalizedId || item.name === saved.name);
+    if (index >= 0) data.customShifts[index] = saved;
+    else data.customShifts.push(saved);
+    return saved;
+  }
+  function savedShiftById(id) { return data.customShifts.find(item => item.id === id); }
+
   const todayKey = () => ShiftEngine.key(new Date());
   const fmt = date => `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
 
@@ -158,31 +181,24 @@
     select.innerHTML = '';
     select.append(new Option('기본 패턴', 'default'));
     Object.entries({ duty: '당직', off: '비번', annual: '연가', official: '공가' }).forEach(([value, label]) => select.append(new Option(label, value)));
+    data.customShifts.forEach(shift => select.append(new Option(`★ ${shift.name}`, `saved:${shift.id}`)));
     select.append(new Option('직접 만들기', 'custom'));
     const current = data.overrides[key];
     if (typeof current === 'number') {
       const legacy = ShiftEngine.shiftFor(date, data.settings, data.overrides);
       select.value = 'custom';
-      $('customShiftName').value = legacy.name || '';
-      $('customStart').value = timeValue(legacy.startHour, legacy.startMinute);
-      $('customEnd').value = timeValue(legacy.endHour, legacy.endMinute);
-      $('customIsOff').checked = Boolean(legacy.isOff);
+      populateCustomFields(legacy);
     } else if (current?.custom) {
-      select.value = 'custom';
-      $('customShiftName').value = current.name || '';
-      $('customStart').value = timeValue(current.startHour, current.startMinute);
-      $('customEnd').value = timeValue(current.endHour, current.endMinute);
-      $('customIsOff').checked = Boolean(current.isOff);
+      const saved = current.id ? savedShiftById(current.id) : null;
+      select.value = saved ? `saved:${saved.id}` : 'custom';
+      populateCustomFields(saved || current);
     } else if (current) {
       const presetValue = Object.entries(presets).find(([, preset]) => preset.name === current.name)?.[0];
       select.value = presetValue || 'custom';
-      if (!presetValue) $('customShiftName').value = current.name || '';
-    } else select.value = 'default';
-    if (!current) {
-      $('customShiftName').value = '';
-      $('customStart').value = '09:00';
-      $('customEnd').value = '18:00';
-      $('customIsOff').checked = false;
+      if (!presetValue) populateCustomFields(current);
+    } else {
+      select.value = 'default';
+      populateCustomFields();
     }
     $('noteInput').value = data.notes[key] || '';
     toggleCustomFields();
@@ -195,7 +211,7 @@
   $('settingsButton').onclick = openSettings;
   $('bottomSettings').onclick = openSettings;
   $('patternSelect').onchange = populateAnchorOptions;
-  $('overrideSelect').onchange = toggleCustomFields;
+  $('overrideSelect').onchange = handleOverrideChoice;
   document.querySelectorAll('.bottom-nav-item[data-view]').forEach(button => button.addEventListener('click', () => showView(button.dataset.view)));
 
   $('settingsForm').addEventListener('submit', event => {
@@ -211,9 +227,12 @@
     const key = ShiftEngine.key(overrideDate);
     const selected = $('overrideSelect').value;
     if (selected === 'default') delete data.overrides[key];
-    else if (selected.startsWith('pattern:')) data.overrides[key] = Number(selected.split(':')[1]);
     else if (presets[selected]) data.overrides[key] = { ...presets[selected], custom: true };
-    else data.overrides[key] = customObjectFromForm();
+    else {
+      const existing = selected.startsWith('saved:') ? savedShiftById(selected.slice(6)) : null;
+      const saved = upsertCustomShift(customObjectFromForm(), existing?.id || null);
+      data.overrides[key] = { ...saved };
+    }
     const note = $('noteInput').value.trim();
     if (note) data.notes[key] = note;
     else delete data.notes[key];

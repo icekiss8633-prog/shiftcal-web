@@ -69,8 +69,9 @@
       <div class="dialog-header"><h2 id="overrideTitle">날짜 근무 변경</h2><button value="cancel" class="close-button" aria-label="닫기">×</button></div>
       <label>근무<select id="overrideSelect"></select></label>
       <div id="customShiftFields" class="custom-shift-fields hidden-view">
-        <label>직접 근무명<input id="customShiftName" maxlength="20" placeholder="예: 교육, 출장, 회의"></label>
+        <label>직접 근무명<input id="customShiftName" maxlength="20" placeholder="예: 자원근무, 교육, 출장"></label>
         <div class="time-fields"><label>시작<input id="customStart" type="time" value="09:00"></label><label>종료<input id="customEnd" type="time" value="18:00"></label></div>
+        <label class="color-label">근무 색상<input id="customColor" type="color" value="#607D8B"></label>
         <label class="checkbox-label"><input id="customIsOff" type="checkbox"> 근무시간 없는 일정(연가·공가처럼 표시)</label>
       </div>
       <label>메모<textarea id="noteInput" rows="4" maxlength="500" placeholder="이 날짜의 메모를 입력해줘"></textarea></label>
