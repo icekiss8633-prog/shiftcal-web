@@ -29,10 +29,10 @@
     return typeFromTuple(pattern.types[index], index);
   }
   function timeRange(shift) {
-    if (shift.isOff) return '휴무/비번';
+    if (shift.isOff) return '근무 시간 없음';
     const start = `${pad(shift.startHour % 24)}:${pad(shift.startMinute)}`;
     const end = `${pad(shift.endHour % 24)}:${pad(shift.endMinute)}`;
-    return shift.endHour >= 24 || shift.endHour <= shift.startHour ? `${start} ~ 다음날 ${end}` : `${start} ~ ${end}`;
+    return shift.endHour >= 24 || shift.endHour <= shift.startHour ? `${start} ~ 다음 날 ${end}` : `${start} ~ ${end}`;
   }
   window.ShiftEngine = { PATTERNS, key, fromKey, shiftFor, timeRange };
 })();

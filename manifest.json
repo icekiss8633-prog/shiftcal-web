@@ -1,7 +1,7 @@
 {
   "name": "ShiftCal Web",
   "short_name": "ShiftCal",
-  "description": "광고 없는 개인용 교대근무 달력",
+  "description": "교대근무 일정과 메모를 간편하게 관리하는 개인용 달력",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#f8fafc",

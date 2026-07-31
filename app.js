@@ -50,7 +50,7 @@
   function renderToday() {
     const shift = ShiftEngine.shiftFor(new Date(), data.settings, data.overrides);
     const note = data.notes[todayKey()];
-    $('todayCard').innerHTML = `<div class="today-label">오늘 · ${escapeHTML(new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }))}</div><div class="today-shift">${escapeHTML(shift.name)}</div><div class="today-meta">${escapeHTML(ShiftEngine.timeRange(shift))}${data.overrides[todayKey()] !== undefined ? ' · 날짜별 변경' : ''}${note ? ' · 메모 있음' : ''}</div>`;
+    $('todayCard').innerHTML = `<div class="today-label">오늘 · ${escapeHTML(new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }))}</div><div class="today-shift">${escapeHTML(shift.name)}</div><div class="today-meta">${escapeHTML(ShiftEngine.timeRange(shift))}${data.overrides[todayKey()] !== undefined ? ' · 근무 변경됨' : ''}${note ? ' · 메모 있음' : ''}</div>`;
   }
 
   function renderLegend() {
@@ -97,7 +97,7 @@
     $('notesCount').textContent = `${entries.length}개`;
     $('notesList').innerHTML = '';
     if (!entries.length) {
-      $('notesList').innerHTML = '<div class="empty-card"><strong>아직 메모가 없어</strong><span>달력에서 날짜를 누르면 메모를 남길 수 있어.</span></div>';
+      $('notesList').innerHTML = '<div class="empty-card"><strong>작성한 메모가 없습니다</strong><span>달력에서 날짜를 선택해 메모를 남겨 보세요.</span></div>';
       return;
     }
     entries.forEach(([dateKey, note]) => {
@@ -118,7 +118,7 @@
     $('statsPattern').textContent = (ShiftEngine.PATTERNS[data.settings.pattern] || ShiftEngine.PATTERNS.threeShift).name;
     $('statsCards').innerHTML = [
       ['근무일', summary.totalDays - summary.offDays, '일'],
-      ['휴무·비번', summary.offDays, '일'],
+      ['휴무일', summary.offDays, '일'],
       ['야간', summary.nightDays, '일'],
       ['근무시간', summary.workHours, '시간'],
       ['메모', summary.noteCount, '개'],
@@ -182,7 +182,7 @@
     select.append(new Option('기본 패턴', 'default'));
     Object.entries({ duty: '당직', off: '비번', annual: '연가', official: '공가' }).forEach(([value, label]) => select.append(new Option(label, value)));
     data.customShifts.forEach(shift => select.append(new Option(`★ ${shift.name}`, `saved:${shift.id}`)));
-    select.append(new Option('직접 만들기', 'custom'));
+    select.append(new Option('직접 입력', 'custom'));
     const current = data.overrides[key];
     const presetValue = findPresetKey(current, presets);
     if (typeof current === 'number') {

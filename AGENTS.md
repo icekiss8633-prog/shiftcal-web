@@ -42,6 +42,7 @@ node tests/custom-shift-catalog.test.js
 node tests/stats-engine.test.js
 node tests/holiday-engine.test.js
 node tests/app-utils.test.js
+node tests/ui-copy.test.js
 ```
 
 ## Safety

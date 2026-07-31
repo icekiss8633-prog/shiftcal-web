@@ -123,10 +123,10 @@
         save(data);
         done(data);
       } catch {
-        alert('백업 파일을 읽지 못했어. ShiftCal 백업 JSON인지 확인해줘.');
+        alert('백업 파일을 불러오지 못했습니다. ShiftCal에서 내보낸 JSON 파일인지 확인해 주세요.');
       }
     };
-    reader.onerror = () => alert('백업 파일을 읽지 못했어. 파일을 다시 선택해줘.');
+    reader.onerror = () => alert('파일을 읽지 못했습니다. 다시 선택해 주세요.');
     reader.readAsText(file);
   }
 
