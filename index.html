@@ -10,6 +10,11 @@
   <link rel="icon" href="icons/shiftcal.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/shiftcal-180.png">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .app-shell { padding-bottom: 8px; }
+    .bottom-nav { padding-bottom: calc(4px + env(safe-area-inset-bottom)); }
+    .bottom-nav-item { padding-bottom: 3px; }
+  </style>
   <title>ShiftCal Web</title>
 </head>
 <body>
@@ -45,7 +50,7 @@
       <div class="breakdown-card"><h3>근무 유형별 현황</h3><div id="shiftBreakdown"></div></div>
     </section>
 
-    <p class="privacy-note">일정과 설정은 이 브라우저에만 저장됩니다. 광고, 로그인, 사용자 추적 기능은 사용하지 않습니다.</p>
+    <p class="privacy-note">일정과 설정은 이 브라우저에만 저장됩니다.</p>
     <nav class="bottom-nav" aria-label="주요 메뉴">
       <button class="bottom-nav-item active" data-view="calendarView"><span>▣</span><b>달력</b></button>
       <button class="bottom-nav-item" data-view="notesView"><span>✎</span><b>메모</b></button>

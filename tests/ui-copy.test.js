@@ -31,4 +31,10 @@ const source = ['index.html', 'app.js', 'storage.js', 'shift-engine.js']
   '근무 변경 해제',
 ].forEach(phrase => assert(source.includes(phrase), `expected UI copy missing: ${phrase}`));
 
+assert(
+  source.includes('<p class="privacy-note">일정과 설정은 이 브라우저에만 저장됩니다.</p>'),
+  'privacy note should contain only the requested sentence',
+);
+assert(!source.includes('광고, 로그인, 사용자 추적 기능은 사용하지 않습니다.'));
+
 console.log('natural Korean UI copy: PASS');

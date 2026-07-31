@@ -44,6 +44,7 @@ node tests/holiday-engine.test.js
 node tests/app-utils.test.js
 node tests/ui-copy.test.js
 node tests/service-worker.test.js
+node tests/ui-layout.test.js
 ```
 
 ## Safety
