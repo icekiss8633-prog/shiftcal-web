@@ -19,8 +19,8 @@
 - 하단 달력·메모·통계·설정 메뉴
 - 메모·근무 변경 표시 점
 - localStorage 저장
-- JSON 백업 내보내기·가져오기
-- PWA manifest/service worker
+- 검증된 JSON 백업 내보내기·가져오기
+- 홈 화면용 아이콘을 포함한 PWA manifest/service worker
 
 ## 실행
 ```sh

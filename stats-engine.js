@@ -15,6 +15,7 @@
     const year = monthDate.getFullYear();
     const month = monthDate.getMonth();
     const totalDays = new Date(year, month + 1, 0).getDate();
+    const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}-`;
     const shiftCounts = {};
     let offDays = 0;
     let nightDays = 0;
@@ -34,7 +35,7 @@
       nightDays,
       workMinutes,
       workHours: Math.round(workMinutes / 60 * 10) / 10,
-      noteCount: Object.values(notes).filter(value => String(value).trim()).length,
+      noteCount: Object.entries(notes).filter(([dateKey, value]) => dateKey.startsWith(monthPrefix) && String(value).trim()).length,
     };
   }
   window.ShiftStats = { monthSummary, durationMinutes, isNight };

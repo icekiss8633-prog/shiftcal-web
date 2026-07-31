@@ -3,9 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
   <meta name="theme-color" content="#0f172a">
   <meta name="description" content="광고 없는 개인용 교대근무 달력">
   <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/shiftcal.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/shiftcal-180.png">
   <link rel="stylesheet" href="styles.css">
   <title>ShiftCal Web</title>
 </head>
@@ -81,6 +84,7 @@
   <script src="shift-engine.js"></script>
   <script src="stats-engine.js"></script>
   <script src="holiday-engine.js"></script>
+  <script src="app-utils.js"></script>
   <script src="storage.js"></script>
   <script src="app.js"></script>
 </body>

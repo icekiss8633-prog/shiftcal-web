@@ -34,12 +34,14 @@ node --check storage.js
 node --check shift-engine.js
 node --check stats-engine.js
 node --check holiday-engine.js
+node --check app-utils.js
 node --check service-worker.js
 node tests/storage.test.js
 node tests/custom-shift.test.js
 node tests/custom-shift-catalog.test.js
 node tests/stats-engine.test.js
 node tests/holiday-engine.test.js
+node tests/app-utils.test.js
 ```
 
 ## Safety

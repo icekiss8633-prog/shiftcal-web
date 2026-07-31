@@ -10,7 +10,7 @@ const E = context.window.ShiftEngine;
 const stats = context.window.ShiftStats;
 
 const settings = { pattern: 'threeShift', anchorDate: '2026-07-29', anchorIndex: 0 };
-const result = stats.monthSummary(new Date(2026, 6, 1), settings, { '2026-07-30': 0 }, { '2026-07-29': '인수인계' });
+const result = stats.monthSummary(new Date(2026, 6, 1), settings, { '2026-07-30': 0 }, { '2026-07-29': '인수인계', '2026-08-01': '다음 달 메모' });
 assert.strictEqual(result.totalDays, 31);
 assert.strictEqual(result.noteCount, 1);
 assert.strictEqual(result.shiftCounts['주간'], 11);

@@ -10,6 +10,7 @@
     annual: { name: '연가', color: '#16A085', startHour: 0, startMinute: 0, endHour: 0, endMinute: 0, isOff: true },
     official: { name: '공가', color: '#5E81AC', startHour: 0, startMinute: 0, endHour: 0, endMinute: 0, isOff: true },
   };
+  const { escapeHTML, safeColor, moveMonth, findPresetKey, snapshotOverrides } = ShiftWebUtils;
   const timeParts = value => { const [hour, minute] = String(value || '09:00').split(':').map(Number); return { hour: hour || 0, minute: minute || 0 }; };
   const timeValue = (hour, minute) => `${String(hour || 0).padStart(2, '0')}:${String(minute || 0).padStart(2, '0')}`;
   function isCustomChoice(value) { return value === 'custom' || value.startsWith('saved:'); }
@@ -31,7 +32,7 @@
   function customObjectFromForm() {
     const start = timeParts($('customStart').value);
     const end = timeParts($('customEnd').value);
-    return { name: $('customShiftName').value.trim() || '기타', color: $('customColor').value || '#607D8B', startHour: start.hour, startMinute: start.minute, endHour: end.hour, endMinute: end.minute, isOff: $('customIsOff').checked, custom: true };
+    return { name: $('customShiftName').value.trim() || '기타', color: safeColor($('customColor').value), startHour: start.hour, startMinute: start.minute, endHour: end.hour, endMinute: end.minute, isOff: $('customIsOff').checked, custom: true };
   }
   function upsertCustomShift(shift, id = null) {
     const normalizedId = id || `custom-${Date.now()}`;
@@ -49,11 +50,11 @@
   function renderToday() {
     const shift = ShiftEngine.shiftFor(new Date(), data.settings, data.overrides);
     const note = data.notes[todayKey()];
-    $('todayCard').innerHTML = `<div class="today-label">오늘 · ${new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}</div><div class="today-shift">${shift.name}</div><div class="today-meta">${ShiftEngine.timeRange(shift)}${data.overrides[todayKey()] !== undefined ? ' · 날짜별 변경' : ''}${note ? ' · 메모 있음' : ''}</div>`;
+    $('todayCard').innerHTML = `<div class="today-label">오늘 · ${escapeHTML(new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }))}</div><div class="today-shift">${escapeHTML(shift.name)}</div><div class="today-meta">${escapeHTML(ShiftEngine.timeRange(shift))}${data.overrides[todayKey()] !== undefined ? ' · 날짜별 변경' : ''}${note ? ' · 메모 있음' : ''}</div>`;
   }
 
   function renderLegend() {
-    const pattern = ShiftEngine.PATTERNS[data.settings.pattern];
+    const pattern = ShiftEngine.PATTERNS[data.settings.pattern] || ShiftEngine.PATTERNS.threeShift;
     const seen = new Set();
     $('legend').innerHTML = '';
     pattern.types.forEach(tuple => {
@@ -61,7 +62,7 @@
       seen.add(tuple[0]);
       const item = document.createElement('span');
       item.className = 'legend-item';
-      item.innerHTML = `<i class="legend-dot" style="background:${tuple[1]}"></i>${tuple[0]}`;
+      item.innerHTML = `<i class="legend-dot" style="background:${safeColor(tuple[1])}"></i>${escapeHTML(tuple[0])}`;
       $('legend').append(item);
     });
   }
@@ -85,7 +86,7 @@
       if (key === todayKey()) cell.classList.add('today');
       if (holiday) cell.classList.add(holiday.type === 'holiday' ? 'holiday-cell' : 'anniversary-cell');
       cell.setAttribute('aria-label', `${key} ${shift.name}${holiday ? ` ${holiday.name}` : ''}${data.notes[key] ? ' 메모 있음' : ''}`);
-      cell.innerHTML = `<span class="day-number">${date.getDate()}</span>${holiday ? `<span class="holiday-label ${holiday.type}">${holiday.name}</span>` : ''}<span class="shift-pill ${shift.isOff ? 'off' : ''}" style="background:${shift.color}">${shift.name}</span>${data.overrides[key] !== undefined ? '<i class="override-dot"></i>' : ''}${data.notes[key] ? '<i class="note-dot" title="메모 있음"></i>' : ''}`;
+      cell.innerHTML = `<span class="day-number">${date.getDate()}</span>${holiday ? `<span class="holiday-label ${holiday.type}">${escapeHTML(holiday.name)}</span>` : ''}<span class="shift-pill ${shift.isOff ? 'off' : ''}" style="background:${safeColor(shift.color)}">${escapeHTML(shift.name)}</span>${data.overrides[key] !== undefined ? '<i class="override-dot"></i>' : ''}${data.notes[key] ? '<i class="note-dot" title="메모 있음"></i>' : ''}`;
       cell.addEventListener('click', () => openOverride(date));
       $('calendarGrid').append(cell);
     }
@@ -104,7 +105,7 @@
       const shift = ShiftEngine.shiftFor(date, data.settings, data.overrides);
       const item = document.createElement('button');
       item.className = 'note-card';
-      item.innerHTML = `<span class="note-date">${date.getMonth() + 1}월 ${date.getDate()}일 · ${shift.name}</span><strong></strong><span class="note-arrow">›</span>`;
+      item.innerHTML = `<span class="note-date">${date.getMonth() + 1}월 ${date.getDate()}일 · ${escapeHTML(shift.name)}</span><strong></strong><span class="note-arrow">›</span>`;
       item.querySelector('strong').textContent = note;
       item.addEventListener('click', () => openOverride(date));
       $('notesList').append(item);
@@ -114,7 +115,7 @@
   function renderStats() {
     const summary = ShiftStats.monthSummary(viewDate, data.settings, data.overrides, data.notes);
     $('statsTitle').textContent = `${fmt(viewDate)} 통계`;
-    $('statsPattern').textContent = ShiftEngine.PATTERNS[data.settings.pattern].name;
+    $('statsPattern').textContent = (ShiftEngine.PATTERNS[data.settings.pattern] || ShiftEngine.PATTERNS.threeShift).name;
     $('statsCards').innerHTML = [
       ['근무일', summary.totalDays - summary.offDays, '일'],
       ['휴무·비번', summary.offDays, '일'],
@@ -123,7 +124,7 @@
       ['메모', summary.noteCount, '개'],
     ].map(([label, value, unit]) => `<div class="stat-card"><span>${label}</span><strong>${value}<small>${unit}</small></strong></div>`).join('');
     const entries = Object.entries(summary.shiftCounts);
-    $('shiftBreakdown').innerHTML = entries.map(([name, count]) => `<div class="breakdown-row"><span>${name}</span><strong>${count}일</strong></div>`).join('');
+    $('shiftBreakdown').innerHTML = entries.map(([name, count]) => `<div class="breakdown-row"><span>${escapeHTML(name)}</span><strong>${count}일</strong></div>`).join('');
   }
 
   function render() {
@@ -174,7 +175,6 @@
 
   function openOverride(date) {
     overrideDate = date;
-    const pattern = ShiftEngine.PATTERNS[data.settings.pattern];
     const key = ShiftEngine.key(date);
     $('overrideTitle').textContent = `${date.getMonth() + 1}월 ${date.getDate()}일 근무 변경`;
     const select = $('overrideSelect');
@@ -184,18 +184,20 @@
     data.customShifts.forEach(shift => select.append(new Option(`★ ${shift.name}`, `saved:${shift.id}`)));
     select.append(new Option('직접 만들기', 'custom'));
     const current = data.overrides[key];
+    const presetValue = findPresetKey(current, presets);
     if (typeof current === 'number') {
       const legacy = ShiftEngine.shiftFor(date, data.settings, data.overrides);
       select.value = 'custom';
       populateCustomFields(legacy);
+    } else if (presetValue) {
+      select.value = presetValue;
     } else if (current?.custom) {
       const saved = current.id ? savedShiftById(current.id) : null;
       select.value = saved ? `saved:${saved.id}` : 'custom';
       populateCustomFields(saved || current);
     } else if (current) {
-      const presetValue = Object.entries(presets).find(([, preset]) => preset.name === current.name)?.[0];
-      select.value = presetValue || 'custom';
-      if (!presetValue) populateCustomFields(current);
+      select.value = 'custom';
+      populateCustomFields(current);
     } else {
       select.value = 'default';
       populateCustomFields();
@@ -205,8 +207,8 @@
     $('overrideDialog').showModal();
   }
 
-  $('previousMonth').onclick = () => { viewDate.setMonth(viewDate.getMonth() - 1); render(); };
-  $('nextMonth').onclick = () => { viewDate.setMonth(viewDate.getMonth() + 1); render(); };
+  $('previousMonth').onclick = () => { viewDate = moveMonth(viewDate, -1); render(); };
+  $('nextMonth').onclick = () => { viewDate = moveMonth(viewDate, 1); render(); };
   $('todayButton').onclick = () => { viewDate = new Date(); render(); };
   $('settingsButton').onclick = openSettings;
   $('bottomSettings').onclick = openSettings;
@@ -216,8 +218,8 @@
 
   $('settingsForm').addEventListener('submit', event => {
     if (event.submitter?.id !== 'saveSettings') return;
+    data.overrides = snapshotOverrides(data.overrides, data.settings, ShiftEngine);
     data.settings = { pattern: $('patternSelect').value, anchorDate: $('anchorDate').value, anchorIndex: Number($('anchorIndex').value) };
-    data.overrides = {};
     ShiftStorage.save(data);
     render();
   });
@@ -227,7 +229,7 @@
     const key = ShiftEngine.key(overrideDate);
     const selected = $('overrideSelect').value;
     if (selected === 'default') delete data.overrides[key];
-    else if (presets[selected]) data.overrides[key] = { ...presets[selected], custom: true };
+    else if (presets[selected]) data.overrides[key] = { ...presets[selected], custom: false };
     else {
       const existing = selected.startsWith('saved:') ? savedShiftById(selected.slice(6)) : null;
       const saved = upsertCustomShift(customObjectFromForm(), existing?.id || null);
@@ -255,6 +257,7 @@
       populateSettings();
       render();
       $('settingsDialog').close();
+      event.target.value = '';
     });
   };
 

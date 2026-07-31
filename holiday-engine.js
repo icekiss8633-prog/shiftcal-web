@@ -26,9 +26,11 @@
       '05-25': { name: '부처님오신날 대체공휴일', type: 'holiday' },
       '06-03': { name: '제9회 전국동시지방선거', type: 'holiday' },
       '07-17': { name: '제헌절', type: 'holiday' },
+      '08-17': { name: '광복절 대체공휴일', type: 'holiday' },
       '09-24': { name: '추석 연휴', type: 'holiday' },
       '09-25': { name: '추석', type: 'holiday' },
       '09-26': { name: '추석 연휴', type: 'holiday' },
+      '10-05': { name: '개천절 대체공휴일', type: 'holiday' },
     },
   };
 
