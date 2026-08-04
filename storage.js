@@ -17,7 +17,7 @@
   }
 
   const defaults = () => ({
-    settings: { pattern: 'threeShift', anchorDate: dateKey(new Date()), anchorIndex: 0 },
+    settings: { pattern: 'threeShift', anchorDate: dateKey(new Date()), anchorIndex: 0, allowanceBreakMinutes: 0 },
     overrides: {},
     notes: {},
     customShifts: [],
@@ -50,10 +50,14 @@
     const source = isObject(data) ? data : {};
     const rawSettings = isObject(source.settings) ? source.settings : {};
     const anchorIndex = Number(rawSettings.anchorIndex);
+    const allowanceBreakMinutes = Number(rawSettings.allowanceBreakMinutes);
     const settings = {
       pattern: PATTERN_KEYS.has(rawSettings.pattern) ? rawSettings.pattern : base.settings.pattern,
       anchorDate: isDateKey(rawSettings.anchorDate) ? rawSettings.anchorDate : base.settings.anchorDate,
       anchorIndex: Number.isInteger(anchorIndex) && anchorIndex >= 0 ? anchorIndex : base.settings.anchorIndex,
+      allowanceBreakMinutes: Number.isFinite(allowanceBreakMinutes) && allowanceBreakMinutes >= 0
+        ? Math.min(1440, Math.round(allowanceBreakMinutes))
+        : base.settings.allowanceBreakMinutes,
     };
     const notes = {};
     if (isObject(source.notes)) {

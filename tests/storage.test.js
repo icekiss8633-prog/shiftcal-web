@@ -31,6 +31,7 @@ function loadStorage(initial = null, DateImpl = Date) {
 
 const fresh = loadStorage().api.load();
 assert.deepStrictEqual(Object.keys(fresh.notes), [], 'fresh data should contain an empty notes map');
+assert.strictEqual(fresh.settings.allowanceBreakMinutes, 0);
 
 class KoreaMorningDate extends Date {
   constructor(...args) {
@@ -55,7 +56,13 @@ const loaded = api.load();
 assert.strictEqual(loaded.notes['2026-07-29'], '인수인계 확인');
 assert.ok(loaded.overrides['2026-07-30'].name.length <= 20);
 assert.strictEqual(loaded.overrides['2026-07-30'].color, '#607D8B');
+assert.strictEqual(loaded.settings.allowanceBreakMinutes, 0, 'legacy backups should get the safe default');
 assert.ok(store.has('shiftcal-web-v1'));
+
+const allowanceSettings = loadStorage({
+  settings: { pattern: 'threeShift', anchorDate: '2026-07-29', anchorIndex: 0, allowanceBreakMinutes: 90 },
+});
+assert.strictEqual(allowanceSettings.api.load().settings.allowanceBreakMinutes, 90);
 
 const invalid = loadStorage({
   settings: { pattern: 'not-a-pattern', anchorDate: '2026-07-29', anchorIndex: 0 },

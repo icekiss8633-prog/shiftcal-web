@@ -8,7 +8,10 @@ const H = context.window.HolidayEngine;
 
 assert.strictEqual(H.eventFor(new Date(2026, 0, 1)).name, '신정');
 assert.strictEqual(H.eventFor(new Date(2026, 2, 2)).name, '삼일절 대체공휴일');
-assert.strictEqual(H.eventFor(new Date(2026, 4, 1)).type, 'holiday');
+assert.strictEqual(H.eventFor(new Date(2026, 4, 1)).name, '노동절');
+assert.strictEqual(H.eventFor(new Date(2026, 6, 17)).name, '제헌절');
+assert.strictEqual(H.eventFor(new Date(2027, 4, 1)).name, '노동절');
+assert.strictEqual(H.eventFor(new Date(2025, 6, 17)), null);
 assert.strictEqual(H.eventFor(new Date(2026, 5, 3)).name, '제9회 전국동시지방선거');
 assert.strictEqual(H.eventFor(new Date(2026, 7, 17)).name, '광복절 대체공휴일');
 assert.strictEqual(H.eventFor(new Date(2026, 9, 5)).name, '개천절 대체공휴일');

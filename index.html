@@ -14,6 +14,11 @@
     .app-shell { padding-bottom: 8px; }
     .bottom-nav { padding-bottom: calc(4px + env(safe-area-inset-bottom)); }
     .bottom-nav-item { padding-bottom: 3px; }
+    .allowance-card { margin-bottom: 14px; background: #f8fbff; }
+    .allowance-card .stats-cards { margin: 0; }
+    .allowance-note { margin: 12px 1px 0; color: #718198; font-size: 11px; line-height: 1.55; }
+    .field-unit { display: block; margin-top: 5px; color: #7d8ca0; font-weight: 600; }
+    .compact-hint { margin: 8px 0 0; }
   </style>
   <title>ShiftCal Web</title>
 </head>
@@ -47,6 +52,11 @@
     <section id="statsView" class="app-view hidden-view">
       <div class="view-heading"><div><p class="eyebrow">월간 요약</p><h2 id="statsTitle">통계</h2></div><span id="statsPattern" class="small-badge"></span></div>
       <div id="statsCards" class="stats-cards"></div>
+      <div class="breakdown-card allowance-card">
+        <h3>초과수당 예상</h3>
+        <div id="allowanceCards" class="stats-cards"></div>
+        <p id="allowanceNote" class="allowance-note"></p>
+      </div>
       <div class="breakdown-card"><h3>근무 유형별 현황</h3><div id="shiftBreakdown"></div></div>
     </section>
 
@@ -65,6 +75,8 @@
       <label>근무 패턴<select id="patternSelect"></select></label>
       <label class="anchor-label">기준일<input id="anchorDate" type="date" required></label>
       <label>기준일 근무<select id="anchorIndex"></select></label>
+      <label>근무 1회당 수당 제외시간<input id="allowanceBreakMinutes" type="number" min="0" max="1440" step="10" inputmode="numeric" value="0"><small class="field-unit">분</small></label>
+      <p class="form-hint compact-hint">식사·수면·휴식 중 실제 근무시간으로 인정되지 않는 시간을 입력하세요. 기관에서 근무시간으로 인정하면 0분으로 둡니다.</p>
       <div class="form-actions"><button value="cancel" class="secondary-button">취소</button><button id="saveSettings" value="default" class="primary-button">저장</button></div>
       <hr>
       <div class="backup-actions"><button type="button" id="exportButton" class="secondary-button">백업 내보내기</button><label class="file-button secondary-button">백업 가져오기<input id="importInput" type="file" accept="application/json"></label></div>

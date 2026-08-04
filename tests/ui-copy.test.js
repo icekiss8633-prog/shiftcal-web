@@ -29,6 +29,8 @@ const source = ['index.html', 'app.js', 'storage.js', 'shift-engine.js']
   'ShiftCal에서 내보낸 JSON 파일인지 확인해 주세요.',
   '근무 시간이 없는 일정',
   '근무 변경 해제',
+  '초과수당 예상',
+  '근무 1회당 수당 제외시간',
 ].forEach(phrase => assert(source.includes(phrase), `expected UI copy missing: ${phrase}`));
 
 assert(

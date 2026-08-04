@@ -119,10 +119,17 @@
     $('statsCards').innerHTML = [
       ['근무일', summary.totalDays - summary.offDays, '일'],
       ['휴무일', summary.offDays, '일'],
-      ['야간', summary.nightDays, '일'],
-      ['근무시간', summary.workHours, '시간'],
+      ['기록 근무', summary.workHours, '시간'],
       ['메모', summary.noteCount, '개'],
     ].map(([label, value, unit]) => `<div class="stat-card"><span>${label}</span><strong>${value}<small>${unit}</small></strong></div>`).join('');
+    $('allowanceCards').innerHTML = [
+      ['수당용 실근무', summary.allowanceWorkHours, '시간'],
+      ['기본근무', summary.regularHours, '시간'],
+      ['시간외', summary.overtimeHours, '시간'],
+      ['야간근무', summary.nightWorkHours, '시간'],
+      ['휴일근무', summary.holidayWorkDays, '일'],
+    ].map(([label, value, unit]) => `<div class="stat-card"><span>${label}</span><strong>${value}<small>${unit}</small></strong></div>`).join('');
+    $('allowanceNote').textContent = `현업·교대근무 예상치 · 근무 1회당 식사·수면·휴식 ${summary.allowanceBreakMinutes}분 공제 · 시간외 월 합계는 1시간 미만 절사 · 야간 구간의 휴게시간과 대체휴무, 기관별 승인·예산 조건은 별도 확인이 필요합니다.`;
     const entries = Object.entries(summary.shiftCounts);
     $('shiftBreakdown').innerHTML = entries.map(([name, count]) => `<div class="breakdown-row"><span>${escapeHTML(name)}</span><strong>${count}일</strong></div>`).join('');
   }
@@ -152,6 +159,7 @@
     });
     patternSelect.value = data.settings.pattern;
     $('anchorDate').value = data.settings.anchorDate;
+    $('allowanceBreakMinutes').value = String(data.settings.allowanceBreakMinutes || 0);
     populateAnchorOptions();
   }
 
@@ -220,6 +228,7 @@
     if (event.submitter?.id !== 'saveSettings') return;
     data.overrides = snapshotOverrides(data.overrides, data.settings, ShiftEngine);
     data.settings = { pattern: $('patternSelect').value, anchorDate: $('anchorDate').value, anchorIndex: Number($('anchorIndex').value) };
+    data.settings.allowanceBreakMinutes = Number($('allowanceBreakMinutes').value) || 0;
     ShiftStorage.save(data);
     render();
   });

@@ -14,18 +14,21 @@
     '12-25': { name: '성탄절', type: 'holiday' },
   };
 
-  // 우주항공청 2026년 월력요항 및 관공서 공휴일 기준.
+  const effectiveRecurring = {
+    '05-01': { name: '노동절', type: 'holiday', since: 2026 },
+    '07-17': { name: '제헌절', type: 'holiday', since: 2026 },
+  };
+
+  // 우주항공청 2026년 월력요항과 2026년 개정 관공서 공휴일 기준.
   const yearly = {
     2026: {
       '02-16': { name: '설날 연휴', type: 'holiday' },
       '02-17': { name: '설날', type: 'holiday' },
       '02-18': { name: '설날 연휴', type: 'holiday' },
       '03-02': { name: '삼일절 대체공휴일', type: 'holiday' },
-      '05-01': { name: '근로자의 날', type: 'holiday' },
       '05-24': { name: '부처님오신날', type: 'holiday' },
       '05-25': { name: '부처님오신날 대체공휴일', type: 'holiday' },
       '06-03': { name: '제9회 전국동시지방선거', type: 'holiday' },
-      '07-17': { name: '제헌절', type: 'holiday' },
       '08-17': { name: '광복절 대체공휴일', type: 'holiday' },
       '09-24': { name: '추석 연휴', type: 'holiday' },
       '09-25': { name: '추석', type: 'holiday' },
@@ -40,6 +43,10 @@
     const yearEvent = yearly[date.getFullYear()]?.[fullKey.slice(5)];
     if (yearEvent) return { ...yearEvent, dateKey: fullKey };
     const monthDay = fullKey.slice(5);
+    const effectiveEvent = effectiveRecurring[monthDay];
+    if (effectiveEvent && date.getFullYear() >= effectiveEvent.since) {
+      return { name: effectiveEvent.name, type: effectiveEvent.type, dateKey: fullKey };
+    }
     const event = recurring[monthDay];
     return event ? { ...event, dateKey: fullKey } : null;
   }
@@ -52,5 +59,5 @@
     }
     return events;
   }
-  window.HolidayEngine = { key, eventFor, eventsInMonth, recurring, yearly };
+  window.HolidayEngine = { key, eventFor, eventsInMonth, recurring, effectiveRecurring, yearly };
 })();
