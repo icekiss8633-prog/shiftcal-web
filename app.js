@@ -12,7 +12,7 @@
   };
   const { escapeHTML, safeColor, moveMonth, findPresetKey, snapshotOverrides } = ShiftWebUtils;
   const timeParts = value => { const [hour, minute] = String(value || '09:00').split(':').map(Number); return { hour: hour || 0, minute: minute || 0 }; };
-  const timeValue = (hour, minute) => `${String(hour || 0).padStart(2, '0')}:${String(minute || 0).padStart(2, '0')}`;
+  const timeValue = (hour, minute) => `${String((Number(hour) || 0) % 24).padStart(2, '0')}:${String(Number(minute) || 0).padStart(2, '0')}`;
   function isCustomChoice(value) { return value === 'custom' || value.startsWith('saved:'); }
   function handleOverrideChoice() {
     const value = $('overrideSelect').value;
@@ -43,6 +43,13 @@
     return saved;
   }
   function savedShiftById(id) { return data.customShifts.find(item => item.id === id); }
+
+  function configuredPreset(key) {
+    const preset = presets[key];
+    if (!preset || key !== 'duty') return preset;
+    const range = data.settings.shiftTimeOverrides?.[data.settings.pattern]?.[preset.name];
+    return range ? { ...preset, ...range } : preset;
+  }
 
   const todayKey = () => ShiftEngine.key(new Date());
   const fmt = date => `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
@@ -129,7 +136,8 @@
       ['야간근무', summary.nightWorkHours, '시간'],
       ['휴일근무', summary.holidayWorkDays, '일'],
     ].map(([label, value, unit]) => `<div class="stat-card"><span>${label}</span><strong>${value}<small>${unit}</small></strong></div>`).join('');
-    $('allowanceNote').textContent = `현업·교대근무 예상치 · 근무 1회당 식사·수면·휴식 ${summary.allowanceBreakMinutes}분 공제 · 시간외 월 합계는 1시간 미만 절사 · 야간 구간의 휴게시간과 대체휴무, 기관별 승인·예산 조건은 별도 확인이 필요합니다.`;
+    const holidayWarning = summary.holidayDataComplete ? '' : ` · ${viewDate.getFullYear()}년 변동 공휴일 데이터 확인 필요`;
+    $('allowanceNote').textContent = `현업·교대근무 예상치 · 근무 1회당 식사·수면·휴식 ${summary.allowanceBreakMinutes}분 공제 · 시간외 월 합계는 1시간 미만 절사 · 야간 구간의 휴게시간과 대체휴무, 기관별 승인·예산 조건은 별도 확인이 필요합니다.${holidayWarning}`;
     const entries = Object.entries(summary.shiftCounts);
     $('shiftBreakdown').innerHTML = entries.map(([name, count]) => `<div class="breakdown-row"><span>${escapeHTML(name)}</span><strong>${count}일</strong></div>`).join('');
   }
@@ -161,6 +169,7 @@
     $('anchorDate').value = data.settings.anchorDate;
     $('allowanceBreakMinutes').value = String(data.settings.allowanceBreakMinutes || 0);
     populateAnchorOptions();
+    populateShiftTimeSettings();
   }
 
   function populateAnchorOptions() {
@@ -174,6 +183,63 @@
       select.append(option);
     });
     select.value = String(data.settings.anchorIndex);
+  }
+
+  function populateShiftTimeSettings() {
+    const patternKey = $('patternSelect').value;
+    const pattern = ShiftEngine.PATTERNS[patternKey] || ShiftEngine.PATTERNS.threeShift;
+    const configured = data.settings.shiftTimeOverrides?.[patternKey] || {};
+    const container = $('shiftTimeSettings');
+    const seen = new Set();
+    container.innerHTML = '';
+    pattern.types.forEach(tuple => {
+      const [name, , startHour, startMinute, endHour, endMinute, isOff] = tuple;
+      if (isOff || seen.has(name)) return;
+      seen.add(name);
+      const range = configured[name] || { startHour, startMinute, endHour, endMinute };
+      const row = document.createElement('div');
+      row.className = 'shift-time-row';
+      row.dataset.shiftTimeName = name;
+      const nameLabel = document.createElement('span');
+      nameLabel.className = 'shift-time-name';
+      nameLabel.textContent = name;
+      const fields = document.createElement('div');
+      fields.className = 'shift-time-fields';
+      const startLabel = document.createElement('label');
+      startLabel.textContent = '시작';
+      const startInput = document.createElement('input');
+      startInput.type = 'time';
+      startInput.required = true;
+      startInput.dataset.shiftTimeRole = 'start';
+      startInput.setAttribute('aria-label', `${name} 시작`);
+      startInput.value = timeValue(range.startHour, range.startMinute);
+      startLabel.append(startInput);
+      const endLabel = document.createElement('label');
+      endLabel.textContent = '종료';
+      const endInput = document.createElement('input');
+      endInput.type = 'time';
+      endInput.required = true;
+      endInput.dataset.shiftTimeRole = 'end';
+      endInput.setAttribute('aria-label', `${name} 종료`);
+      endInput.value = timeValue(range.endHour, range.endMinute);
+      endLabel.append(endInput);
+      fields.append(startLabel, endLabel);
+      row.append(nameLabel, fields);
+      container.append(row);
+    });
+  }
+
+  function collectShiftTimeSettings() {
+    return Object.fromEntries([...$('shiftTimeSettings').querySelectorAll('.shift-time-row')].map(row => {
+      const start = timeParts(row.querySelector('[data-shift-time-role="start"]').value);
+      const end = timeParts(row.querySelector('[data-shift-time-role="end"]').value);
+      return [row.dataset.shiftTimeName, {
+        startHour: start.hour,
+        startMinute: start.minute,
+        endHour: end.hour,
+        endMinute: end.minute,
+      }];
+    }));
   }
 
   function openSettings() {
@@ -192,7 +258,9 @@
     data.customShifts.forEach(shift => select.append(new Option(`★ ${shift.name}`, `saved:${shift.id}`)));
     select.append(new Option('직접 입력', 'custom'));
     const current = data.overrides[key];
-    const presetValue = findPresetKey(current, presets);
+    const configuredPresets = Object.fromEntries(Object.keys(presets).map(key => [key, configuredPreset(key)]));
+    const presetValue = findPresetKey(current, configuredPresets)
+      || (current?.name === presets.duty.name && !current.custom ? 'duty' : null);
     if (typeof current === 'number') {
       const legacy = ShiftEngine.shiftFor(date, data.settings, data.overrides);
       select.value = 'custom';
@@ -220,15 +288,25 @@
   $('todayButton').onclick = () => { viewDate = new Date(); render(); };
   $('settingsButton').onclick = openSettings;
   $('bottomSettings').onclick = openSettings;
-  $('patternSelect').onchange = populateAnchorOptions;
+  $('patternSelect').onchange = () => { populateAnchorOptions(); populateShiftTimeSettings(); };
   $('overrideSelect').onchange = handleOverrideChoice;
   document.querySelectorAll('.bottom-nav-item[data-view]').forEach(button => button.addEventListener('click', () => showView(button.dataset.view)));
 
   $('settingsForm').addEventListener('submit', event => {
     if (event.submitter?.id !== 'saveSettings') return;
     data.overrides = snapshotOverrides(data.overrides, data.settings, ShiftEngine);
-    data.settings = { pattern: $('patternSelect').value, anchorDate: $('anchorDate').value, anchorIndex: Number($('anchorIndex').value) };
-    data.settings.allowanceBreakMinutes = Number($('allowanceBreakMinutes').value) || 0;
+    const pattern = $('patternSelect').value;
+    data.settings = {
+      ...data.settings,
+      pattern,
+      anchorDate: $('anchorDate').value,
+      anchorIndex: Number($('anchorIndex').value),
+      allowanceBreakMinutes: Number($('allowanceBreakMinutes').value) || 0,
+      shiftTimeOverrides: {
+        ...(data.settings.shiftTimeOverrides || {}),
+        [pattern]: collectShiftTimeSettings(),
+      },
+    };
     ShiftStorage.save(data);
     render();
   });
@@ -238,7 +316,7 @@
     const key = ShiftEngine.key(overrideDate);
     const selected = $('overrideSelect').value;
     if (selected === 'default') delete data.overrides[key];
-    else if (presets[selected]) data.overrides[key] = { ...presets[selected], custom: false };
+    else if (presets[selected]) data.overrides[key] = { ...configuredPreset(selected), custom: false };
     else {
       const existing = selected.startsWith('saved:') ? savedShiftById(selected.slice(6)) : null;
       const saved = upsertCustomShift(customObjectFromForm(), existing?.id || null);

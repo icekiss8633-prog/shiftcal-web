@@ -133,6 +133,7 @@
       nightWorkMinutes,
       nightWorkHours: roundedHours(nightWorkMinutes),
       holidayWorkDays,
+      holidayDataComplete: Boolean(holidayEngine?.hasCompleteHolidayData?.(year)),
       noteCount: Object.entries(notes).filter(([dateKey, value]) => dateKey.startsWith(monthPrefix) && String(value).trim()).length,
     };
   }

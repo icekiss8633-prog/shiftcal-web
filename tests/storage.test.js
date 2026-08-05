@@ -32,6 +32,7 @@ function loadStorage(initial = null, DateImpl = Date) {
 const fresh = loadStorage().api.load();
 assert.deepStrictEqual(Object.keys(fresh.notes), [], 'fresh data should contain an empty notes map');
 assert.strictEqual(fresh.settings.allowanceBreakMinutes, 0);
+assert.deepStrictEqual(Object.keys(fresh.settings.shiftTimeOverrides), []);
 
 class KoreaMorningDate extends Date {
   constructor(...args) {
@@ -60,9 +61,24 @@ assert.strictEqual(loaded.settings.allowanceBreakMinutes, 0, 'legacy backups sho
 assert.ok(store.has('shiftcal-web-v1'));
 
 const allowanceSettings = loadStorage({
-  settings: { pattern: 'threeShift', anchorDate: '2026-07-29', anchorIndex: 0, allowanceBreakMinutes: 90 },
+  settings: {
+    pattern: 'threeShift',
+    anchorDate: '2026-07-29',
+    anchorIndex: 0,
+    allowanceBreakMinutes: 90,
+    shiftTimeOverrides: {
+      threeShift: {
+        '야간': { startHour: 16, startMinute: 0, endHour: 2, endMinute: 0 },
+        '잘못된 근무': { startHour: 99, startMinute: 0, endHour: 2, endMinute: 0 },
+      },
+      unknownPattern: { '근무': { startHour: 9, startMinute: 0, endHour: 18, endMinute: 0 } },
+    },
+  },
 });
 assert.strictEqual(allowanceSettings.api.load().settings.allowanceBreakMinutes, 90);
+assert.strictEqual(allowanceSettings.api.load().settings.shiftTimeOverrides.threeShift['야간'].endHour, 2);
+assert.strictEqual(allowanceSettings.api.load().settings.shiftTimeOverrides.threeShift['잘못된 근무'], undefined);
+assert.strictEqual(allowanceSettings.api.load().settings.shiftTimeOverrides.unknownPattern, undefined);
 
 const invalid = loadStorage({
   settings: { pattern: 'not-a-pattern', anchorDate: '2026-07-29', anchorIndex: 0 },

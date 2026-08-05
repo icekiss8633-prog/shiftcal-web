@@ -30,7 +30,9 @@ const source = ['index.html', 'app.js', 'storage.js', 'shift-engine.js']
   '근무 시간이 없는 일정',
   '근무 변경 해제',
   '초과수당 예상',
-  '근무 1회당 수당 제외시간',
+  '근무별 시간',
+  '근무 1회당 공통 제외시간',
+  '종료 시각이 시작 시각보다 이르면 다음 날로 계산합니다.',
 ].forEach(phrase => assert(source.includes(phrase), `expected UI copy missing: ${phrase}`));
 
 assert(

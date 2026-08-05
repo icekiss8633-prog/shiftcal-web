@@ -17,6 +17,15 @@ assert.strictEqual(H.eventFor(new Date(2026, 7, 17)).name, '광복절 대체공�
 assert.strictEqual(H.eventFor(new Date(2026, 9, 5)).name, '개천절 대체공휴일');
 assert.strictEqual(H.eventFor(new Date(2026, 4, 8)).type, 'anniversary');
 assert.strictEqual(H.eventFor(new Date(2026, 6, 29)), null);
+assert.strictEqual(H.eventFor(new Date(2027, 1, 7)).name, '설날');
+assert.strictEqual(H.eventFor(new Date(2027, 1, 9)).name, '설날 대체공휴일');
+assert.strictEqual(H.eventFor(new Date(2027, 4, 3)).name, '노동절 대체공휴일');
+assert.strictEqual(H.eventFor(new Date(2027, 4, 13)).name, '부처님오신날');
+assert.strictEqual(H.eventFor(new Date(2027, 6, 19)).name, '제헌절 대체공휴일');
+assert.strictEqual(H.eventFor(new Date(2027, 8, 15)).name, '추석');
+assert.strictEqual(H.hasCompleteHolidayData(2026), true);
+assert.strictEqual(H.hasCompleteHolidayData(2027), true);
+assert.strictEqual(H.hasCompleteHolidayData(2028), false);
 const may = H.eventsInMonth(new Date(2026, 4, 1));
 assert.ok(may.some(item => item.name === '어린이날'));
 assert.ok(may.some(item => item.name === '어버이날'));

@@ -35,7 +35,25 @@
       '09-26': { name: '추석 연휴', type: 'holiday' },
       '10-05': { name: '개천절 대체공휴일', type: 'holiday' },
     },
+    2027: {
+      '02-06': { name: '설날 연휴', type: 'holiday' },
+      '02-07': { name: '설날', type: 'holiday' },
+      '02-08': { name: '설날 연휴', type: 'holiday' },
+      '02-09': { name: '설날 대체공휴일', type: 'holiday' },
+      '05-03': { name: '노동절 대체공휴일', type: 'holiday' },
+      '05-13': { name: '부처님오신날', type: 'holiday' },
+      '07-19': { name: '제헌절 대체공휴일', type: 'holiday' },
+      '08-16': { name: '광복절 대체공휴일', type: 'holiday' },
+      '09-14': { name: '추석 연휴', type: 'holiday' },
+      '09-15': { name: '추석', type: 'holiday' },
+      '09-16': { name: '추석 연휴', type: 'holiday' },
+      '10-04': { name: '개천절 대체공휴일', type: 'holiday' },
+      '10-11': { name: '한글날 대체공휴일', type: 'holiday' },
+      '12-27': { name: '성탄절 대체공휴일', type: 'holiday' },
+    },
   };
+
+  const hasCompleteHolidayData = year => Object.prototype.hasOwnProperty.call(yearly, year);
 
   const key = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   function eventFor(date) {
@@ -59,5 +77,5 @@
     }
     return events;
   }
-  window.HolidayEngine = { key, eventFor, eventsInMonth, recurring, effectiveRecurring, yearly };
+  window.HolidayEngine = { key, eventFor, eventsInMonth, hasCompleteHolidayData, recurring, effectiveRecurring, yearly };
 })();

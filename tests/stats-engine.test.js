@@ -35,5 +35,31 @@ assert.strictEqual(stats.coversHolidayWindow(new Date(2026, 6, 4), partialHolida
 assert.strictEqual(stats.calculateOvertimeMinutes(200 * 60, 160 * 60, 1), 32 * 60);
 const leaveSettings = { pattern: 'threeShift', anchorDate: '2026-07-04', anchorIndex: 0, allowanceBreakMinutes: 0 };
 const annualLeave = { name: '연가', startHour: 0, startMinute: 0, endHour: 0, endMinute: 0, isOff: true };
-assert.strictEqual(stats.regularMinutesForMonth(new Date(2026, 6, 1), leaveSettings, { '2026-07-04': annualLeave }), 168 * 60);
+assert.strictEqual(
+  stats.regularMinutesForMonth(new Date(2026, 6, 1), leaveSettings, { '2026-07-04': annualLeave }),
+  168 * 60,
+  'the app treats a full-day leave override as eight paid hours even on a weekend',
+);
+
+const dutySettings = {
+  pattern: 'twentyFourFortyEight',
+  anchorDate: '2026-07-04',
+  anchorIndex: 0,
+  allowanceBreakMinutes: 0,
+  shiftTimeOverrides: {
+    twentyFourFortyEight: {
+      '당직': { startHour: 9, startMinute: 0, endHour: 2, endMinute: 0 },
+    },
+  },
+};
+const configuredDuty = E.shiftFor(new Date(2026, 6, 4), dutySettings);
+assert.strictEqual(E.timeRange(configuredDuty), '09:00 ~ 다음 날 02:00');
+assert.strictEqual(stats.durationMinutes(configuredDuty), 17 * 60);
+assert.strictEqual(stats.nightMinutesForShift(new Date(2026, 6, 4), configuredDuty), 4 * 60);
+
+const february2027 = stats.monthSummary(new Date(2027, 1, 1), settings);
+assert.strictEqual(february2027.regularHours, 144);
+assert.strictEqual(february2027.holidayDataComplete, true);
+const february2028 = stats.monthSummary(new Date(2028, 1, 1), settings);
+assert.strictEqual(february2028.holidayDataComplete, false);
 console.log('monthly stats contract: PASS');

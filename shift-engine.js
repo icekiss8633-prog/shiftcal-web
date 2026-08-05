@@ -15,18 +15,24 @@
   const fromKey = value => { const [y,m,d] = value.split('-').map(Number); return new Date(y,m-1,d); };
   const dayDiff = (anchor, target) => Math.round((new Date(target.getFullYear(),target.getMonth(),target.getDate()) - new Date(anchor.getFullYear(),anchor.getMonth(),anchor.getDate())) / 86400000);
   const typeFromTuple = (t, index) => ({ id: String(index), name:t[0], color:t[1], startHour:t[2], startMinute:t[3], endHour:t[4], endMinute:t[5], isOff:t[6] });
+  const applyTimeOverride = (shift, settings, patternKey) => {
+    if (shift.isOff) return shift;
+    const override = settings.shiftTimeOverrides?.[patternKey]?.[shift.name];
+    return override ? { ...shift, ...override } : shift;
+  };
   function shiftFor(date, settings, overrides = {}) {
-    const pattern = PATTERNS[settings.pattern] || PATTERNS.threeShift;
+    const patternKey = PATTERNS[settings.pattern] ? settings.pattern : 'threeShift';
+    const pattern = PATTERNS[patternKey];
     const dateKey = key(date);
     if (overrides[dateKey] !== undefined) {
       const override = overrides[dateKey];
       if (typeof override === 'object' && override !== null) return { id: `custom-${dateKey}`, ...override };
-      if (Number.isInteger(override) && pattern.types[override]) return typeFromTuple(pattern.types[override], override);
+      if (Number.isInteger(override) && pattern.types[override]) return applyTimeOverride(typeFromTuple(pattern.types[override], override), settings, patternKey);
     }
     const anchor = fromKey(settings.anchorDate || key(new Date()));
     let index = (Number(settings.anchorIndex) + dayDiff(anchor, date)) % pattern.types.length;
     if (index < 0) index += pattern.types.length;
-    return typeFromTuple(pattern.types[index], index);
+    return applyTimeOverride(typeFromTuple(pattern.types[index], index), settings, patternKey);
   }
   function timeRange(shift) {
     if (shift.isOff) return '근무 시간 없음';

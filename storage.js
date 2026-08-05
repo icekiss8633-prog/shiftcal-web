@@ -17,7 +17,7 @@
   }
 
   const defaults = () => ({
-    settings: { pattern: 'threeShift', anchorDate: dateKey(new Date()), anchorIndex: 0, allowanceBreakMinutes: 0 },
+    settings: { pattern: 'threeShift', anchorDate: dateKey(new Date()), anchorIndex: 0, allowanceBreakMinutes: 0, shiftTimeOverrides: {} },
     overrides: {},
     notes: {},
     customShifts: [],
@@ -45,6 +45,32 @@
     return shift;
   }
 
+  function normalizeTimeRange(value) {
+    if (!isObject(value)) return null;
+    const fields = ['startHour', 'startMinute', 'endHour', 'endMinute'].map(field => Number(value[field]));
+    const [startHour, startMinute, endHour, endMinute] = fields;
+    if (!Number.isInteger(startHour) || startHour < 0 || startHour > 23) return null;
+    if (!Number.isInteger(startMinute) || startMinute < 0 || startMinute > 59) return null;
+    if (!Number.isInteger(endHour) || endHour < 0 || endHour > 23) return null;
+    if (!Number.isInteger(endMinute) || endMinute < 0 || endMinute > 59) return null;
+    return { startHour, startMinute, endHour, endMinute };
+  }
+
+  function normalizeShiftTimeOverrides(value) {
+    if (!isObject(value)) return {};
+    const result = {};
+    Object.entries(value).forEach(([patternKey, ranges]) => {
+      if (!PATTERN_KEYS.has(patternKey) || !isObject(ranges)) return;
+      const normalizedRanges = {};
+      Object.entries(ranges).slice(0, 20).forEach(([name, range]) => {
+        const normalized = normalizeTimeRange(range);
+        if (normalized && name.trim()) normalizedRanges[name.trim().slice(0, 20)] = normalized;
+      });
+      if (Object.keys(normalizedRanges).length) result[patternKey] = normalizedRanges;
+    });
+    return result;
+  }
+
   function normalize(data) {
     const base = defaults();
     const source = isObject(data) ? data : {};
@@ -58,6 +84,7 @@
       allowanceBreakMinutes: Number.isFinite(allowanceBreakMinutes) && allowanceBreakMinutes >= 0
         ? Math.min(1440, Math.round(allowanceBreakMinutes))
         : base.settings.allowanceBreakMinutes,
+      shiftTimeOverrides: normalizeShiftTimeOverrides(rawSettings.shiftTimeOverrides),
     };
     const notes = {};
     if (isObject(source.notes)) {
