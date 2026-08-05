@@ -15,6 +15,11 @@ const september = U.moveMonth(august, 1);
 assert.strictEqual(E.key(august), '2026-08-01');
 assert.strictEqual(E.key(september), '2026-09-01');
 assert.strictEqual(E.key(U.moveMonth(new Date(2026, 2, 31), -1)), '2026-02-01');
+assert.strictEqual(E.key(U.addDays(new Date(2026, 7, 1), -1)), '2026-07-31');
+assert.strictEqual(E.key(U.startOfWeek(new Date(2026, 7, 5))), '2026-08-02');
+assert.strictEqual(U.periodTitle(new Date(2026, 7, 5), 'month'), '2026년 8월');
+assert.strictEqual(U.periodTitle(new Date(2026, 7, 5), 'week'), '2026년 8월 2–8일');
+assert.strictEqual(U.periodTitle(new Date(2026, 7, 31), 'week'), '2026년 8월 30일–9월 5일');
 
 assert.strictEqual(U.escapeHTML('<img src=x onerror="alert(1)">'), '&lt;img src=x onerror=&quot;alert(1)&quot;&gt;');
 assert.strictEqual(U.safeColor('#4A90D9'), '#4A90D9');

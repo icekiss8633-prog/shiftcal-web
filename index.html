@@ -11,9 +11,6 @@
   <link rel="apple-touch-icon" href="icons/shiftcal-180.png">
   <link rel="stylesheet" href="styles.css">
   <style>
-    .app-shell { padding-bottom: 8px; }
-    .bottom-nav { padding-bottom: calc(4px + env(safe-area-inset-bottom)); }
-    .bottom-nav-item { padding-bottom: 3px; }
     .allowance-card { margin-bottom: 14px; background: #f8fbff; }
     .allowance-card .stats-cards { margin: 0; }
     .allowance-note { margin: 12px 1px 0; color: #718198; font-size: 11px; line-height: 1.55; }
@@ -34,33 +31,33 @@
 </head>
 <body>
   <main class="app-shell">
-    <header class="app-header">
-      <div><p class="eyebrow">나만의 교대근무 달력</p><h1>ShiftCal</h1></div>
-      <button id="settingsButton" class="icon-button" aria-label="설정">⚙️</button>
-    </header>
-
     <section id="calendarView" class="app-view">
-      <section class="today-card" id="todayCard"></section>
+      <button class="today-card" id="todayCard" type="button" aria-label="오늘 일정 열기"></button>
       <section class="toolbar" aria-label="달력 탐색">
-        <button id="previousMonth" class="nav-button" aria-label="이전 달">‹</button>
-        <button id="todayButton" class="today-button">오늘</button>
+        <button id="previousMonth" class="nav-button" aria-label="이전 기간">‹</button>
         <h2 id="monthTitle"></h2>
-        <button id="nextMonth" class="nav-button" aria-label="다음 달">›</button>
+        <button id="todayButton" class="today-button">오늘</button>
+        <button id="nextMonth" class="nav-button" aria-label="다음 기간">›</button>
       </section>
+      <div class="calendar-mode-switch" role="tablist" aria-label="달력 보기 방식">
+        <button class="calendar-mode-button active" type="button" role="tab" data-calendar-mode="month" aria-selected="true">월간</button>
+        <button class="calendar-mode-button" type="button" role="tab" data-calendar-mode="week" aria-selected="false">주간</button>
+        <button class="calendar-mode-button" type="button" role="tab" data-calendar-mode="list" aria-selected="false">목록</button>
+      </div>
       <section class="calendar-card">
-        <div class="weekday-row"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+        <div id="weekdayRow" class="weekday-row"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
         <div id="calendarGrid" class="calendar-grid" aria-live="polite"></div>
       </section>
-      <section class="legend" id="legend"></section>
+      <p class="privacy-note">일정과 설정은 이 브라우저에만 저장됩니다.</p>
     </section>
 
     <section id="notesView" class="app-view hidden-view">
-      <div class="view-heading"><div><p class="eyebrow">날짜별 기록</p><h2>메모</h2></div><span id="notesCount" class="count-badge"></span></div>
+      <div class="view-heading"><h2>메모</h2><span id="notesCount" class="count-badge"></span></div>
       <div id="notesList" class="notes-list"></div>
     </section>
 
     <section id="statsView" class="app-view hidden-view">
-      <div class="view-heading"><div><p class="eyebrow">월간 요약</p><h2 id="statsTitle">통계</h2></div><span id="statsPattern" class="small-badge"></span></div>
+      <div class="view-heading"><h2 id="statsTitle">통계</h2><span id="statsPattern" class="small-badge"></span></div>
       <div id="statsCards" class="stats-cards"></div>
       <div class="breakdown-card allowance-card">
         <h3>초과수당 예상</h3>
@@ -70,7 +67,6 @@
       <div class="breakdown-card"><h3>근무 유형별 현황</h3><div id="shiftBreakdown"></div></div>
     </section>
 
-    <p class="privacy-note">일정과 설정은 이 브라우저에만 저장됩니다.</p>
     <nav class="bottom-nav" aria-label="주요 메뉴">
       <button class="bottom-nav-item active" data-view="calendarView"><span>▣</span><b>달력</b></button>
       <button class="bottom-nav-item" data-view="notesView"><span>✎</span><b>메모</b></button>

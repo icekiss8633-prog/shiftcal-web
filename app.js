@@ -4,15 +4,17 @@
   let viewDate = new Date();
   let overrideDate = null;
   let currentView = 'calendarView';
+  let calendarMode = data.settings.calendarMode || 'month';
   const presets = {
     duty: { name: '당직', color: '#D35400', startHour: 9, startMinute: 0, endHour: 9, endMinute: 0, isOff: false },
     off: { name: '비번', color: '#95A5A6', startHour: 0, startMinute: 0, endHour: 0, endMinute: 0, isOff: true },
     annual: { name: '연가', color: '#16A085', startHour: 0, startMinute: 0, endHour: 0, endMinute: 0, isOff: true },
     official: { name: '공가', color: '#5E81AC', startHour: 0, startMinute: 0, endHour: 0, endMinute: 0, isOff: true },
   };
-  const { escapeHTML, safeColor, moveMonth, findPresetKey, snapshotOverrides } = ShiftWebUtils;
+  const { escapeHTML, safeColor, moveMonth, addDays, startOfWeek, periodTitle, findPresetKey, snapshotOverrides } = ShiftWebUtils;
   const timeParts = value => { const [hour, minute] = String(value || '09:00').split(':').map(Number); return { hour: hour || 0, minute: minute || 0 }; };
   const timeValue = (hour, minute) => `${String((Number(hour) || 0) % 24).padStart(2, '0')}:${String(Number(minute) || 0).padStart(2, '0')}`;
+  const previewText = value => String(value || '').trim().replace(/\s+/g, ' ');
   function isCustomChoice(value) { return value === 'custom' || value.startsWith('saved:'); }
   function handleOverrideChoice() {
     const value = $('overrideSelect').value;
@@ -55,47 +57,76 @@
   const fmt = date => `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
 
   function renderToday() {
-    const shift = ShiftEngine.shiftFor(new Date(), data.settings, data.overrides);
-    const note = data.notes[todayKey()];
-    $('todayCard').innerHTML = `<div class="today-label">오늘 · ${escapeHTML(new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }))}</div><div class="today-shift">${escapeHTML(shift.name)}</div><div class="today-meta">${escapeHTML(ShiftEngine.timeRange(shift))}${data.overrides[todayKey()] !== undefined ? ' · 근무 변경됨' : ''}${note ? ' · 메모 있음' : ''}</div>`;
+    const date = new Date();
+    const key = ShiftEngine.key(date);
+    const shift = ShiftEngine.shiftFor(date, data.settings, data.overrides);
+    const note = previewText(data.notes[key]);
+    $('todayCard').innerHTML = `<span class="today-main"><span class="today-label">오늘 · ${escapeHTML(date.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }))}</span><strong class="today-shift">${escapeHTML(shift.name)}</strong></span><span class="today-meta">${escapeHTML(ShiftEngine.timeRange(shift))}${data.overrides[key] !== undefined ? ' · 변경' : ''}</span>${note ? `<span class="today-note">${escapeHTML(note)}</span>` : ''}`;
   }
 
-  function renderLegend() {
-    const pattern = ShiftEngine.PATTERNS[data.settings.pattern] || ShiftEngine.PATTERNS.threeShift;
-    const seen = new Set();
-    $('legend').innerHTML = '';
-    pattern.types.forEach(tuple => {
-      if (seen.has(tuple[0])) return;
-      seen.add(tuple[0]);
-      const item = document.createElement('span');
-      item.className = 'legend-item';
-      item.innerHTML = `<i class="legend-dot" style="background:${safeColor(tuple[1])}"></i>${escapeHTML(tuple[0])}`;
-      $('legend').append(item);
-    });
+  function createMonthCell(date) {
+    const key = ShiftEngine.key(date);
+    const shift = ShiftEngine.shiftFor(date, data.settings, data.overrides);
+    const holiday = HolidayEngine.eventFor(date);
+    const note = previewText(data.notes[key]);
+    const cell = document.createElement('button');
+    cell.className = 'day-cell';
+    if (date.getMonth() !== viewDate.getMonth()) cell.classList.add('muted');
+    if (date.getDay() === 0) cell.classList.add('sunday');
+    if (date.getDay() === 6) cell.classList.add('saturday');
+    if (key === todayKey()) cell.classList.add('today');
+    if (holiday) cell.classList.add(holiday.type === 'holiday' ? 'holiday-cell' : 'anniversary-cell');
+    cell.setAttribute('aria-label', `${key} ${shift.name}${holiday ? ` ${holiday.name}` : ''}${note ? ` 메모 ${note}` : ''}`);
+    cell.innerHTML = `<span class="day-number">${date.getDate()}</span>${holiday ? `<span class="holiday-label ${holiday.type}">${escapeHTML(holiday.name)}</span>` : ''}<span class="shift-pill ${shift.isOff ? 'off' : ''}" style="background:${safeColor(shift.color)}">${escapeHTML(shift.name)}</span>${note ? `<span class="calendar-note">${escapeHTML(note)}</span>` : ''}${data.overrides[key] !== undefined ? '<i class="override-dot"></i>' : ''}`;
+    cell.addEventListener('click', () => openOverride(date));
+    return cell;
+  }
+
+  function createAgendaRow(date) {
+    const key = ShiftEngine.key(date);
+    const shift = ShiftEngine.shiftFor(date, data.settings, data.overrides);
+    const holiday = HolidayEngine.eventFor(date);
+    const note = previewText(data.notes[key]);
+    const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+    const row = document.createElement('button');
+    row.className = 'agenda-row';
+    if (date.getDay() === 0) row.classList.add('sunday');
+    if (date.getDay() === 6) row.classList.add('saturday');
+    if (holiday?.type === 'holiday') row.classList.add('holiday');
+    if (key === todayKey()) row.classList.add('today');
+    row.setAttribute('aria-label', `${key} ${shift.name}${holiday ? ` ${holiday.name}` : ''}${note ? ` 메모 ${note}` : ''}`);
+    row.innerHTML = `<span class="agenda-date"><b>${date.getDate()}</b><small>${date.getMonth() + 1}월 · ${weekdays[date.getDay()]}</small></span><span class="agenda-content"><span class="agenda-shift-line"><i class="agenda-color" style="background:${safeColor(shift.color)}"></i><strong>${escapeHTML(shift.name)}</strong><small>${escapeHTML(ShiftEngine.timeRange(shift))}${data.overrides[key] !== undefined ? ' · 변경' : ''}</small></span>${holiday ? `<span class="agenda-holiday ${holiday.type}">${escapeHTML(holiday.name)}</span>` : ''}${note ? `<span class="agenda-note">${escapeHTML(note)}</span>` : ''}</span>`;
+    row.addEventListener('click', () => openOverride(date));
+    return row;
   }
 
   function renderCalendar() {
-    $('monthTitle').textContent = fmt(viewDate);
-    $('calendarGrid').innerHTML = '';
+    $('monthTitle').textContent = periodTitle(viewDate, calendarMode);
+    $('weekdayRow').classList.toggle('hidden-view', calendarMode !== 'month');
+    document.querySelectorAll('.calendar-mode-button').forEach(button => {
+      const active = button.dataset.calendarMode === calendarMode;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-selected', String(active));
+    });
+    const grid = $('calendarGrid');
+    grid.innerHTML = '';
+    grid.className = calendarMode === 'month' ? 'calendar-grid' : `schedule-list ${calendarMode}-list`;
+    if (calendarMode === 'week') {
+      const start = startOfWeek(viewDate);
+      for (let index = 0; index < 7; index += 1) grid.append(createAgendaRow(addDays(start, index)));
+      return;
+    }
+    if (calendarMode === 'list') {
+      const days = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate();
+      for (let day = 1; day <= days; day += 1) grid.append(createAgendaRow(new Date(viewDate.getFullYear(), viewDate.getMonth(), day)));
+      return;
+    }
     const first = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
     const start = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1 - first.getDay());
     for (let i = 0; i < 42; i += 1) {
       const date = new Date(start);
       date.setDate(start.getDate() + i);
-      const key = ShiftEngine.key(date);
-      const shift = ShiftEngine.shiftFor(date, data.settings, data.overrides);
-      const holiday = HolidayEngine.eventFor(date);
-      const cell = document.createElement('button');
-      cell.className = 'day-cell';
-      if (date.getMonth() !== viewDate.getMonth()) cell.classList.add('muted');
-      if (date.getDay() === 0) cell.classList.add('sunday');
-      if (date.getDay() === 6) cell.classList.add('saturday');
-      if (key === todayKey()) cell.classList.add('today');
-      if (holiday) cell.classList.add(holiday.type === 'holiday' ? 'holiday-cell' : 'anniversary-cell');
-      cell.setAttribute('aria-label', `${key} ${shift.name}${holiday ? ` ${holiday.name}` : ''}${data.notes[key] ? ' 메모 있음' : ''}`);
-      cell.innerHTML = `<span class="day-number">${date.getDate()}</span>${holiday ? `<span class="holiday-label ${holiday.type}">${escapeHTML(holiday.name)}</span>` : ''}<span class="shift-pill ${shift.isOff ? 'off' : ''}" style="background:${safeColor(shift.color)}">${escapeHTML(shift.name)}</span>${data.overrides[key] !== undefined ? '<i class="override-dot"></i>' : ''}${data.notes[key] ? '<i class="note-dot" title="메모 있음"></i>' : ''}`;
-      cell.addEventListener('click', () => openOverride(date));
-      $('calendarGrid').append(cell);
+      grid.append(createMonthCell(date));
     }
   }
 
@@ -145,7 +176,6 @@
   function render() {
     renderToday();
     renderCalendar();
-    renderLegend();
     renderNotes();
     renderStats();
   }
@@ -283,13 +313,24 @@
     $('overrideDialog').showModal();
   }
 
-  $('previousMonth').onclick = () => { viewDate = moveMonth(viewDate, -1); render(); };
-  $('nextMonth').onclick = () => { viewDate = moveMonth(viewDate, 1); render(); };
+  function movePeriod(offset) {
+    viewDate = calendarMode === 'week' ? addDays(viewDate, offset * 7) : moveMonth(viewDate, offset);
+    render();
+  }
+
+  $('previousMonth').onclick = () => movePeriod(-1);
+  $('nextMonth').onclick = () => movePeriod(1);
   $('todayButton').onclick = () => { viewDate = new Date(); render(); };
-  $('settingsButton').onclick = openSettings;
+  $('todayCard').onclick = () => openOverride(new Date());
   $('bottomSettings').onclick = openSettings;
   $('patternSelect').onchange = () => { populateAnchorOptions(); populateShiftTimeSettings(); };
   $('overrideSelect').onchange = handleOverrideChoice;
+  document.querySelectorAll('.calendar-mode-button').forEach(button => button.addEventListener('click', () => {
+    calendarMode = button.dataset.calendarMode;
+    data.settings.calendarMode = calendarMode;
+    ShiftStorage.save(data);
+    renderCalendar();
+  }));
   document.querySelectorAll('.bottom-nav-item[data-view]').forEach(button => button.addEventListener('click', () => showView(button.dataset.view)));
 
   $('settingsForm').addEventListener('submit', event => {
@@ -341,6 +382,7 @@
     if (!event.target.files[0]) return;
     ShiftStorage.importData(event.target.files[0], next => {
       data = next;
+      calendarMode = data.settings.calendarMode || 'month';
       populateSettings();
       render();
       $('settingsDialog').close();

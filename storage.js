@@ -4,6 +4,7 @@
     'fiveDutyFiveOff', 'threeShift', 'fourTeam', 'fourTeamThreeShift', 'alternateDay',
     'twoTwo', 'pitman', 'twentyFourFortyEight', 'fiveTwo',
   ]);
+  const CALENDAR_MODES = new Set(['month', 'week', 'list']);
   const pad = number => String(number).padStart(2, '0');
   const dateKey = date => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -17,7 +18,7 @@
   }
 
   const defaults = () => ({
-    settings: { pattern: 'threeShift', anchorDate: dateKey(new Date()), anchorIndex: 0, allowanceBreakMinutes: 0, shiftTimeOverrides: {} },
+    settings: { pattern: 'threeShift', anchorDate: dateKey(new Date()), anchorIndex: 0, allowanceBreakMinutes: 0, shiftTimeOverrides: {}, calendarMode: 'month' },
     overrides: {},
     notes: {},
     customShifts: [],
@@ -85,6 +86,7 @@
         ? Math.min(1440, Math.round(allowanceBreakMinutes))
         : base.settings.allowanceBreakMinutes,
       shiftTimeOverrides: normalizeShiftTimeOverrides(rawSettings.shiftTimeOverrides),
+      calendarMode: CALENDAR_MODES.has(rawSettings.calendarMode) ? rawSettings.calendarMode : base.settings.calendarMode,
     };
     const notes = {};
     if (isObject(source.notes)) {

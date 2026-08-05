@@ -4,7 +4,7 @@ const path = require('path');
 
 const source = fs.readFileSync(path.join(__dirname, '..', 'service-worker.js'), 'utf8');
 
-assert(source.includes("const CACHE = 'shiftcal-web-v13'"));
+assert(source.includes("const CACHE = 'shiftcal-web-v15'"));
 assert(source.includes("cache: 'reload'"), 'new cache installation should bypass stale HTTP-cached assets');
 assert(source.includes('self.skipWaiting()'), 'new service worker should activate without waiting for every tab to close');
 assert(source.includes('self.clients.claim()'), 'new service worker should control open pages after activation');
